@@ -24,19 +24,17 @@ browser = "firefox"
 files = "ranger"
 music = "ncmpcpp"
 mail = "mutt"
+rss = "newsbeuter"
+
 -- Default modkey.
--- Usually, Mod4 is the key with a logo between Control and Alt.
--- If you do not like this or do not have such a key,
--- I suggest you to remap Mod4 to another key using xmodmap or other tools.
--- However, you can use another modifier like Mod1, but it may interact with others.
 modkey = "Mod4"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
 layouts =
 {
     awful.layout.suit.floating,
-    awful.layout.suit.tile, --LastClient:half-left||Rest:shared-right
-    awful.layout.suit.tile.top, --Same but FirstClient on top
+    awful.layout.suit.tile, --LastClient on half-left, rest shared-right
+    awful.layout.suit.tile.top, --LastClient on buttom, rest shared-top
     awful.layout.suit.fair, --Shared-All
     awful.layout.suit.spiral, --LastClient:1/2||Rest:1/4,1/8,1/16
 }
@@ -45,9 +43,10 @@ layouts =
 -- {{{ Tags
 -- Define a tag table which hold all screen tags.
 tags = {
-    names = {"term","mail","files","browser","browser2","p2p","twitter","desktop","programing"},
-    layout = {layouts[1],layouts[1],layouts[3],layouts[3],layouts[1],layouts[1],layouts[1],layouts[2],layouts[1]}
+    names = {"{main} ","{www} ","{www2} ","{p2p} ","{code} ","{aux}"},
+    layout = {layouts[1],layouts[2],layouts[1],layouts[1],layouts[1],layouts[2]}
 }
+
 for s = 1, screen.count() do
     tags[s] = awful.tag(tags.names, s, tags.layout)
 end
@@ -73,6 +72,20 @@ mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
 -- Create a textclock widget
 mytextclock = awful.widget.textclock({ align = "right" })
 
+-- MPD widget. Hides icon and text when nothing is playing.
+--vicious.register(mpdinfo, vicious.widgets.mpd,
+--  function (widget, args)
+--      if args["{state}"] == "Stop" then
+--      	mpdicon.bg_image = nil
+--      	mpdicon.width = 0 
+--      	return ""
+--      else
+--      	mpdicon.bg_image = image(beautiful.widget_mpd)
+--      	mpdicon.width = 8
+--      	return "MPD: " .. args["{Artist}"] .. ' - ' .. args["{Title}"]
+--      end
+--  end)
+   
 -- Create a systray
 mysystray = widget({ type = "systray" })
 
@@ -152,8 +165,8 @@ for s = 1, screen.count() do
         },
         
         mytextclock,
-        s == 1 and mysystray or nil,
-	mytasklist[s],
+        --s == 1 and mysystray or nil,
+	--mytasklist[s],
         layout = awful.widget.layout.horizontal.rightleft
     }
 end
@@ -244,13 +257,18 @@ globalkeys = awful.util.table.join(
               function ()
                   awful.util.spawn( terminal .. " -e " .. files) end),
 
-    -- Run mail program 
+    -- Run mail client
     awful.key({ modkey }, "F2",
               function ()
                   awful.util.spawn( terminal .. " -e " .. mail) end),
 
-    -- Run music player	
+    -- Run rss client
     awful.key({ modkey }, "F3",
+              function ()
+                  awful.util.spawn( terminal .. " -e " .. rss) end),
+
+    -- Run music player
+    awful.key({ modkey }, "F4",
               function ()
                   awful.util.spawn( terminal .. " -e " .. music) end)
 )
@@ -335,20 +353,16 @@ awful.rules.rules = {
                      keys = clientkeys,
                      size_hints_honor = false,
                      buttons = clientbuttons } },
-    { rule = { class = "Thunderbird" },
-      properties = { tag = tags[mouse.screen][2]} },
-    { rule = { class = "Thunar" },
-      properties = { tag = tags[mouse.screen][3]} },
     { rule = { class = "Firefox"},
-      properties = { tag = tags[mouse.screen][4]} },
+      properties = { tag = tags[mouse.screen][2]} },
     { rule = { class = "Chromium" },
-      properties = { tag = tags[mouse.screen][5]} },
+      properties = { tag = tags[mouse.screen][3]} },
     { rule = { class = "Tixati" },
+      properties = { tag = tags[mouse.screen][4]} },
+    { rule = { class = "Opera"},
+      properties = { tag = tags[mouse.screen][3]} },
+    { rule = { class = "Hotot"},
       properties = { tag = tags[mouse.screen][6]} },
-    { rule = { class = "Jambi" },
-      properties = { tag = tags[mouse.screen][9]} }, 
-    { rule = { class = "Hotot" },
-      properties = { tag = tags[mouse.screen][7]} },
       -- Set Firefox to always map on tags number 2 of screen 1.
     -- { rule = { class = "Firefox" },
     --   properties = { tag = tags[1][2] } },
@@ -372,7 +386,7 @@ client.add_signal("manage", function (c, startup)
     if not startup then
         -- Set the windows at the slave,
         -- i.e. put it at the end of others instead of setting it master.
-        -- awful.client.setslave(c)
+         awful.client.setslave(c)
 
         -- Put windows in a smart way, only if they does not set an initial position.
         if not c.size_hints.user_position and not c.size_hints.program_position then
@@ -387,13 +401,7 @@ client.add_signal("unfocus", function(c) c.border_color = beautiful.border_norma
 -- }}}
 
 --run applications on boot
---os.execute("thunderbird &")
---os.execute("thunar &")
---os.execute("thunar &")
---os.execute("firefox &")
---os.execute("chromium &")
 --os.execute("nixnote &")
---os.execute("tixati &")
-
+os.execute("tixati &")
 
 
