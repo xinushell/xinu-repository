@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+
+#check idiom and get translation
+
+#get the whole string 
+str="$*"
+#get a new string from option '-e' to end
+esp=${str:$(expr index $1 - + 2)}
+
+#delete blanks
+bun=${str// /}
+
+if [ "$1" = '-e' ];
+then 
+	bun=${esp// /}
+	web=$(curl -s -i -G --user-agent "firefox" http://www.wordreference.com/es/en/translation.asp?spen=$bun);
+else
+	web=$(curl -s -i -G --user-agent "firefox" http://www.wordreference.com/es/translation.asp?tranword=$bun);
+fi
+
+#select relevant text
+rel=$(echo "$web" | sed "/'FrWrd'\|'POS2'\|'FrEx'\|'ToEx'\|'ToWrd'/!d" | sed 's/<\/td>/<\/td>\n/g')
+
+#color lines
+def=$(echo "$rel" | sed -e 's/<strong>\(.*\)<\/strong>/\o033[31m\1\o033[m/g' -e 's/<em[^>]*>\([^<]*\)<\/em>/\o033[34m<em>\1<\/em>\o033[m/g') 
+com=$(echo "$def" | sed -e '/<td[^>]*To2/s/.*/\o033[35m&\o033[m/g' -e '/>Note</s/.*/\o033[35m&\o033[m/g') 
+not=$(echo "$com" | sed -e 's/^<td>\(.*\)<\/td>$/\o033[33m\1\o033[m/g') 
+tra=$(echo "$not" | sed -e '/ToWrd/s/\(.*\)<em>/\o033[m\1\o033[34m/g' -e '/ToEx/s/.*/\o033[37m&\o033[m/g') 
+exp=$(echo "$tra" | sed -e '/FrEx/s/.*/\o033[36m&\o033[m/g')
+
+#join some lines
+ape=$(echo "$exp" | sed -e '/FrWrd/N;s/\n/ /' -e '/td[^>]*To2.>[^<].*/N;s/\n/ /' -e '/td[^>]*To2.></N;s/\n//' -e '/FrE/N;s/\n/ /')
+
+#delete awful arrow-symbol,tags,&nbsp-lines and duplicate and consecutive lines 
+out=$(echo "$ape" | sed -e 's/.<\/a>//g' -e 's/<[^>]*>//g' -e '/&nbsp;/d' -e '$!N; /^\(.*\)\n\1$/!P; D') 
+
+echo "$out" | more
